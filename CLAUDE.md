@@ -41,5 +41,7 @@ Ao republicar a página, manter essas capabilities (omitir o campo no redeploy p
 
 ## Regras
 - O preço vem sempre da tabela; distância é só referência.
+- `km` é **sempre** a distância de carro (por rua) da **Loja 1** (Av. Francisco de Paula Leite, 3243 – coordenadas -23.118485, -47.223547) até o bairro, mesmo quando outra loja entrega. Arredondar para 0,5 km. Vale para todo bairro novo ou alterado.
+- Como calcular: localizar o bairro (centro do bairro ou ruas da lista `r`) e pedir a rota Loja 1 → bairro no OSRM (`router.project-osrm.org/route/v1/driving/-47.223547,-23.118485;LON,LAT?overview=false`, campo `routes[0].distance` em metros).
 - Não inventar preço para bairro novo: perguntar ao Henrique ou marcar `ok: false`.
 - Mensagens de commit em português, dizendo o que mudou (ex.: "Jd. Morada do Sol: R$ 135 → R$ 138").

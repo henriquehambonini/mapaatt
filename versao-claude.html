@@ -1,0 +1,285 @@
+<title>Preço do Gás por Bairro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: ferramenta de atendimento — busca fixa no topo, resultado grande, faixas de preço como filtro, tabela abaixo */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#14213a; --muted:#5b6880; --line:#dbe1ea;
+  --accent:#e8630a; --accent-soft:#fdeee3; --blue:#123d8a; --blue-soft:#e6edf9;
+  --warn:#9a5b00; --warn-soft:#fff3d6; --ok:#17784a; --ok-soft:#e1f4ea;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1524; --surface:#161f33; --fg:#e8edf6; --muted:#9aa7bf; --line:#2a3550;
+  --accent:#ff8a3d; --accent-soft:#3a2416; --blue:#8fb2ff; --blue-soft:#1c2a4a;
+  --warn:#ffc867; --warn-soft:#3a2e12; --ok:#6fd6a0; --ok-soft:#163327; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1524; --surface:#161f33; --fg:#e8edf6; --muted:#9aa7bf; --line:#2a3550;
+  --accent:#ff8a3d; --accent-soft:#3a2416; --blue:#8fb2ff; --blue-soft:#1c2a4a;
+  --warn:#ffc867; --warn-soft:#3a2e12; --ok:#6fd6a0; --ok-soft:#163327; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-size:2rem;line-height:1.05;margin:0;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.9rem}
+.btn{font:inherit;font-weight:600;font-size:.88rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);color:var(--surface);border-color:var(--blue)}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.search{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px}
+.search label{display:block;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+#q{width:100%;font:inherit;font-size:1.35rem;padding:14px 16px;border:2px solid var(--blue);border-radius:12px;background:var(--surface);color:var(--fg)}
+.hit{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+.hit .nome{font-size:1.3rem;font-weight:700;min-width:0}
+.hit .loja{color:var(--muted);font-size:.9rem}
+.price{font-family:var(--display);font-weight:700;font-size:3rem;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums;text-align:right;grid-row:span 2}
+.price small{font-size:1.2rem;color:var(--muted);margin-right:2px}
+.chip{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle}
+.chip.pend{background:var(--warn-soft);color:var(--warn)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.more{display:grid;gap:8px}
+.mini{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;text-align:left;font:inherit;color:var(--fg);width:100%}
+.mini b{font-variant-numeric:tabular-nums;color:var(--accent)}
+.none{background:var(--warn-soft);color:var(--fg);border-radius:12px;padding:16px 18px}
+.none strong{color:var(--warn)}
+.tiers{display:flex;flex-wrap:wrap;gap:8px}
+.tier{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 12px;display:grid;gap:0;text-align:left;min-width:92px}
+.tier .v{font-family:var(--display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.tier .c{font-size:.75rem;color:var(--muted)}
+.tier[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.script{background:var(--blue-soft);border-radius:12px;padding:14px 18px}
+.script h2{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;color:var(--blue)}
+.script ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg)}
+td.km{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+td.neg{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600;color:var(--ok)}
+.modes{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:6px}
+.modes label{margin:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:.85rem;font-weight:600;border:0;background:none;color:var(--muted);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--surface)}
+.hint{margin:0 0 8px;color:var(--muted);font-size:.9rem;display:block}
+.streets{display:grid;gap:6px}
+.srow{display:grid;grid-template-columns:1fr auto;gap:2px 12px;text-align:left;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.srow:hover{border-color:var(--blue)}
+.sn{font-weight:700;min-width:0}
+.sb{grid-column:1;color:var(--muted);font-size:.85rem;min-width:0}
+.sp{grid-column:2;grid-row:1/3;align-self:center;text-align:right;font-family:var(--display);font-weight:700;font-size:1.5rem;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sp small{display:block;font-family:var(--body);font-size:.75rem;color:var(--ok);font-weight:600}
+.rbtn{padding:4px 10px;font-size:.8rem;white-space:nowrap}
+.rta{width:100%;min-height:160px;font:inherit;font-size:.88rem;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.negbox{grid-column:1/-1;background:var(--ok-soft);color:var(--fg);border-radius:8px;padding:8px 12px;font-size:.92rem}
+.negbox b{color:var(--ok);font-variant-numeric:tabular-nums}
+td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+select,.tin{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.tin{width:100%;min-width:160px}
+.editbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--warn-soft);border-radius:12px;padding:12px 14px}
+.editbar span{flex:1 1 220px;font-size:.9rem}
+.status{font-size:.85rem;color:var(--muted)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted)}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;font-size:1.1rem}
+@media (max-width:560px){.price{font-size:2.4rem}.hit{grid-template-columns:1fr}.price{text-align:left;grid-row:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Preço do Gás P13 por Bairro</h1>
+      <p class="sub">Disk Gás Indaiatuba · distâncias aproximadas a partir da Loja 1 (Pq. das Nações)</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="status" id="status">Carregando tabela…</span>
+      <button class="btn" id="editBtn" hidden>Editar tabela</button>
+    </div>
+  </header>
+
+  <div class="search">
+    <div class="modes" role="group" aria-label="Buscar por">
+      <label for="q" id="qlabel">Bairro do cliente</label>
+      <div class="seg"><button type="button" id="mB" aria-pressed="true">Bairro</button><button type="button" id="mR" aria-pressed="false">Rua</button></div>
+    </div>
+    <input id="q" type="search" autocomplete="off" placeholder="Digite o bairro… ex: morada, nações, itaici" autofocus>
+  </div>
+
+  <section id="result" aria-live="polite"></section>
+
+  <section class="script">
+    <h2>Na ligação</h2>
+    <ol>
+      <li>Depois da saudação, pergunte: <b>“Qual o seu bairro?”</b></li>
+      <li>Digite aqui e informe o preço que aparecer. A distância até a Loja 1 serve de referência para comparar com bairros vizinhos.</li>
+      <li>Cliente não sabe o bairro? Toque em <b>Rua</b> e digite o nome da rua. Se a rua aparecer em mais de um bairro, pergunte o número ou um ponto de referência. Não achou? Confirme com o supervisor.</li>
+      <li>Cliente pediu desconto? Ofereça primeiro o preço da tabela. Só se ele insistir, desça até no máximo o <b>preço negociável</b>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="tiers" id="tiers"></div>
+  </section>
+
+  <div class="editbar" id="editbar" hidden>
+    <span>Modo edição: mude o preço, marque como conferido ou adicione bairros. Nada é salvo até clicar em <b>Salvar</b>.</span>
+    <button class="btn" id="pendBtn" aria-pressed="false">Só a conferir</button>
+    <button class="btn" id="addBtn">+ Bairro</button>
+    <button class="btn" id="cancelBtn">Cancelar</button>
+    <button class="btn primary" id="saveBtn">Salvar</button>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr id="thead"></tr></thead>
+    <tbody id="tbody"><tr><td class="empty" colspan="4">A tabela de bairros aparece aqui assim que carregar.</td></tr></tbody>
+  </table></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const brl=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const norm=s=>(' '+s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')+' ')
+  .replace(/[.,\-–()]/g,' ')
+  .replace(/\b(jd|jdm|jard)\b/g,'jardim').replace(/\bpq\b/g,'parque').replace(/\b(vl)\b/g,'vila')
+  .replace(/\bres\b/g,'residencial').replace(/\bcond\b/g,'condominio').replace(/\bdist\b/g,'distrito')
+  .replace(/\s+/g,' ').trim();
+const STOP=new Set(['jardim','vila','parque','residencial','condominio','bairro','de','do','da','das','dos']);
+
+let data=null, draft=null, editing=false, filter=null, ref=null, canEdit=false, mode='b', openR=null, pendOnly=false;
+
+function kmTxt(k){return k==null?'—':'≈ '+k.toLocaleString('pt-BR',{maximumFractionDigits:1})+' km'}
+function lojaNome(id){const l=(data?.lojas||[]).find(x=>x.id===id);return l?l.nome:'—'}
+function list(){return editing?draft.bairros:(data?.bairros||[])}
+
+function score(b,q){
+  const n=norm(b.n); if(!q) return 0;
+  if(n===q) return 100;
+  const toks=q.split(' ').filter(t=>t&&!STOP.has(t));
+  const use=toks.length?toks:q.split(' ');
+  let s=0;
+  for(const t of use){ if(n.split(' ').some(w=>w.startsWith(t))) s+=10; else if(n.includes(t)) s+=5; else return 0; }
+  if(n.includes(q)) s+=5;
+  return s;
+}
+
+function renderResult(){
+  const el=$('#result'); const raw=$('#q').value.trim();
+  if(!data){el.innerHTML='';return}
+  if(!raw){el.innerHTML='';return}
+  if(mode==='r'){const sh=streetHits(raw);if(sh.length)renderStreets(el,sh,false);else el.innerHTML=`<div class="none"><strong>Rua não encontrada.</strong> Confira a grafia, tente só o sobrenome (ex: barnabe) ou peça um ponto de referência e confirme com o supervisor.</div>`;return}
+  const q=norm(raw);
+  const hits=data.bairros.map(b=>({b,s:score(b,q)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s||a.b.n.localeCompare(b.b.n));
+  if(!hits.length){
+    const sh=streetHits(raw);
+    if(sh.length){renderStreets(el,sh,true);return}
+    el.innerHTML=`<div class="none"><strong>Bairro não encontrado.</strong> Toque em <b>Rua</b> e busque pelo nome da rua. Se não achar, confirme com o supervisor. Na dúvida entre duas faixas, informe a <b>maior</b>.</div>`;return}
+  const top=hits[0].b;
+  let h=`<div class="hit"><div class="nome"></div><div class="price"><small>R$</small>${brl(top.p)}</div><div class="loja"></div>${top.pn!=null?`<div class="negbox">Preço negociável: <b>R$ ${brl(top.pn)}</b> · use só se o cliente pedir desconto</div>`:''}</div>`;
+  if(hits.length>1){h+=`<div class="more" style="margin-top:8px">`+hits.slice(1,6).map((x,i)=>`<button class="mini" data-i="${i+1}"><span></span><b>R$ ${brl(x.b.p)}</b></button>`).join('')+`</div>`}
+  el.innerHTML=h;
+  el.querySelector('.nome').textContent=top.n;
+    el.querySelector('.loja').textContent=kmTxt(top.km)+' da Loja 1';
+  el.querySelectorAll('.mini').forEach(btn=>{const b=hits[+btn.dataset.i].b;btn.querySelector('span').textContent=b.n;btn.onclick=()=>{$('#q').value=b.n;renderResult()}});
+}
+
+const SN=s=>' '+s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.,\-–()]/g,' ')
+  .replace(/\b(rua|r|avenida|av|alameda|al|estrada|est|travessa|tv|praca|pc|rodovia|rod|viela)\b/g,' ')
+  .replace(/\b(doutor|dr|professor|prof|padre|pe|engenheiro|eng|coronel|cel|deputada|deputado|reverendo|vereador|ver|senador|sargento|capitao|general|presidente|dona)\b/g,' ')
+  .replace(/\s+/g,' ')+' ';
+let streetIdx=null;
+function buildIdx(){streetIdx=[];for(const b of data.bairros)for(const r of (b.r||[]))streetIdx.push({r,b,n:SN(r)})}
+function streetHits(raw){
+  if(!streetIdx)buildIdx();
+  const toks=SN(raw).trim().split(' ').filter(t=>t.length>1&&!['de','do','da','das','dos'].includes(t));
+  if(!toks.length)return[];
+  const out=[];
+  for(const x of streetIdx){let s=0,ok=true;for(const t of toks){if(x.n.includes(' '+t))s+=10;else if(x.n.includes(t))s+=4;else{ok=false;break}}if(ok)out.push({...x,s})}
+  return out.sort((a,b)=>b.s-a.s||a.r.localeCompare(b.r)).slice(0,12);
+}
+function renderStreets(el,hits,fallback){
+  const multi=hits.some(h=>hits.some(o=>o.b!==h.b&&o.n===h.n));
+  let h=fallback?`<p class="hint">Nenhum bairro com esse nome, mas encontrei estas ruas:</p>`:'';
+  if(multi)h+=`<div class="none" style="margin-bottom:8px"><strong>Rua em mais de um bairro.</strong> Pergunte o número da casa ou um ponto de referência antes de passar o preço.</div>`;
+  h+=`<div class="streets">`+hits.map((x,i)=>`<button class="srow" data-i="${i}"><span class="sn"></span><span class="sb"></span><span class="sp">R$ ${brl(x.b.p)}${x.b.pn!=null?`<small>neg. R$ ${brl(x.b.pn)}</small>`:''}</span></button>`).join('')+`</div>`;
+  el.innerHTML=h;
+  el.querySelectorAll('.srow').forEach(btn=>{const x=hits[+btn.dataset.i];btn.querySelector('.sn').textContent=x.r;btn.querySelector('.sb').textContent=x.b.n+' · '+kmTxt(x.b.km)+' da Loja 1';btn.onclick=()=>{setMode('b');$('#q').value=x.b.n;renderResult()}});
+}
+function setMode(m){mode=m;$('#mB').setAttribute('aria-pressed',m==='b');$('#mR').setAttribute('aria-pressed',m==='r');
+  $('#qlabel').textContent=m==='b'?'Bairro do cliente':'Rua do cliente';
+  $('#q').placeholder=m==='b'?'Digite o bairro… ex: morada, nações, itaici':'Digite a rua… ex: walter gut, ario barnabé';}
+$('#mB').onclick=()=>{setMode('b');renderResult();$('#q').focus()};
+$('#mR').onclick=()=>{setMode('r');renderResult();$('#q').focus()};
+
+function renderTiers(){
+  const el=$('#tiers'); if(!data){el.innerHTML='';return}
+  el.innerHTML=data.precos.map(p=>{const c=list().filter(b=>b.p===p).length;return `<button class="tier" aria-pressed="${filter===p}" data-p="${p}"><span class="v">R$ ${brl(p)}</span><span class="c">${c} bairro${c===1?'':'s'}</span></button>`}).join('');
+  el.querySelectorAll('.tier').forEach(t=>t.onclick=()=>{const p=+t.dataset.p;filter=filter===p?null:p;renderTiers();renderTable()});
+}
+
+function renderTable(){
+  const tb=$('#tbody'), th=$('#thead');
+  th.innerHTML=editing?'<th>Bairro</th><th>Preço</th><th>Preço negociável (R$)</th><th>Distância (km)</th><th>Ruas</th><th>Loja que entrega</th><th>Conferido</th><th></th>':'<th>Bairro</th><th>Preço</th><th>Preço negociável</th><th>Dist. Loja 1</th>';
+  if(!data){tb.innerHTML='<tr><td class="empty" colspan="4">A tabela de bairros aparece aqui assim que carregar.</td></tr>';return}
+  const rows=list().map((b,i)=>({b,i})).filter(x=>(filter===null||x.b.p===filter)&&(!editing||!pendOnly||!x.b.ok)).sort((a,b)=>a.b.p-b.b.p||(a.b.km??99)-(b.b.km??99)||a.b.n.localeCompare(b.b.n));
+  if(!rows.length){tb.innerHTML=`<tr><td class="empty" colspan="8">Nenhum bairro nesta faixa.</td></tr>`;return}
+  tb.innerHTML='';
+  for(const {b,i} of rows){
+    const tr=document.createElement('tr');
+    if(editing){
+      tr.innerHTML=`<td><input class="tin" id="n${i}"></td><td><select id="p${i}">${draft.precos.map(p=>`<option value="${p}">R$ ${brl(p)}</option>`).join('')}</select></td><td><input class="tin" style="min-width:80px;width:96px" type="number" step="0.01" min="0" placeholder="—" id="g${i}"></td><td><input class="tin" style="min-width:70px;width:80px" type="number" step="0.1" min="0" id="k${i}"></td><td><button class="btn rbtn" type="button">${(b.r||[]).length} ruas</button></td><td><select id="l${i}">${draft.lojas.map(l=>`<option value="${l.id}"></option>`).join('')}</select></td><td><input type="checkbox" id="o${i}"></td><td><button class="del" title="Remover bairro" aria-label="Remover bairro">×</button></td>`;
+      const n=tr.querySelector('.tin');n.value=b.n;n.oninput=()=>b.n=n.value;
+      const p=tr.querySelector(`#p${i}`);p.value=String(b.p);p.onchange=()=>{b.p=+p.value;renderTiers()};
+      const g=tr.querySelector(`#g${i}`);g.value=b.pn??'';g.oninput=()=>b.pn=g.value===''?null:+g.value;
+      const l=tr.querySelector(`#l${i}`);[...l.options].forEach((o,k)=>o.textContent=draft.lojas[k].nome);l.value=b.l;l.onchange=()=>b.l=l.value;
+      const k=tr.querySelector(`#k${i}`);k.value=b.km??'';k.oninput=()=>b.km=k.value===''?null:+k.value;
+      const o=tr.querySelector(`#o${i}`);o.checked=!!b.ok;o.onchange=()=>b.ok=o.checked;
+      tr.querySelector('.rbtn').onclick=()=>{openR=openR===i?null:i;renderTable()};
+      tr.querySelector('.del').onclick=()=>{draft.bairros.splice(i,1);renderTiers();renderTable()};
+    }else{
+      tr.innerHTML=`<td></td><td class="num">R$ ${brl(b.p)}</td><td class="neg">${b.pn!=null?'R$ '+brl(b.pn):'—'}</td><td class="km"></td>`;
+      tr.children[0].textContent=b.n;tr.children[3].textContent=kmTxt(b.km);
+    }
+    tb.appendChild(tr);
+    if(editing&&openR===i){const tr2=document.createElement('tr');tr2.innerHTML=`<td colspan="8"><label class="hint" for="rt${i}"></label><textarea class="rta" id="rt${i}"></textarea></td>`;tr2.querySelector('label').textContent='Ruas de '+b.n+' (uma por linha)';const ta=tr2.querySelector('textarea');ta.value=(b.r||[]).join('\n');ta.oninput=()=>{b.r=ta.value.split('\n').map(x=>x.trim()).filter(Boolean)};tb.appendChild(tr2)}
+  }
+}
+
+function renderAll(){renderResult();renderTiers();renderTable();
+  if(data){const t=data.bairros.length,ok=data.bairros.filter(b=>b.ok).length;$('#status').textContent=`${t} bairros`}}
+
+$('#q').addEventListener('input',renderResult);
+$('#editBtn').onclick=()=>{draft=JSON.parse(JSON.stringify(data));editing=true;$('#editbar').hidden=false;$('#editBtn').hidden=true;renderTiers();renderTable()};
+$('#cancelBtn').onclick=()=>{editing=false;draft=null;$('#editbar').hidden=true;$('#editBtn').hidden=!canEdit;renderAll()};
+$('#pendBtn').onclick=()=>{pendOnly=!pendOnly;$('#pendBtn').setAttribute('aria-pressed',pendOnly);$('#pendBtn').textContent=pendOnly?`Mostrar todos`:'Só a conferir';renderTable()};
+$('#addBtn').onclick=()=>{draft.bairros.unshift({n:'Novo bairro',p:draft.precos[0],km:null,pn:null,r:[],l:draft.lojas[0].id,ok:true});filter=null;renderTiers();renderTable();const f=$('#n0');if(f){f.focus();f.select()}};
+$('#saveBtn').onclick=async()=>{
+  draft.bairros=draft.bairros.filter(b=>b.n.trim()).map(b=>({...b,n:b.n.trim()}));
+  $('#saveBtn').disabled=true;$('#status').textContent='Salvando…';
+  try{await ref.set(draft);editing=false;draft=null;$('#editbar').hidden=true;$('#editBtn').hidden=!canEdit;$('#status').textContent='Tabela salva'}
+  catch(e){$('#status').textContent='Não foi possível salvar: '+(e?.message||e?.code||'erro')+'. Tente de novo.'}
+  finally{$('#saveBtn').disabled=false}
+};
+
+(async()=>{
+  if(!window.claude){
+    // Fora do Claude (ex.: Vercel): lê a tabela do arquivo JSON publicado junto, só leitura
+    for(const u of ['dados/tabela.json','tabela.json']){
+      try{const r=await fetch(u,{cache:'no-store'});if(r.ok){data=await r.json();streetIdx=null;renderAll();return}}catch(e){}
+    }
+    $('#status').textContent='Não foi possível carregar a tabela.';return
+  }
+  const db=await window.claude?.use?.('db');
+  if(!db){$('#status').textContent='Entre na sua conta Claude para ver a tabela.';return}
+  const user=await window.claude.use('user');
+  canEdit=user?await user.canEdit():false;
+  ref=db.doc('tabela/atual');
+  ref.onSnapshot(snap=>{
+    if(!snap.exists){$('#status').textContent='Tabela ainda vazia.';return}
+    data=snap.data(); streetIdx=null; if(!editing) renderAll();
+    $('#editBtn').hidden=!canEdit||editing;
+  },e=>{$('#status').textContent='Erro ao carregar a tabela ('+(e?.code||'erro')+').'});
+})();
+</script>

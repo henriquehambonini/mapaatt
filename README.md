@@ -2,10 +2,23 @@
 
 Ferramenta de consulta usada pelo call center para informar o preço do gás P13 conforme o bairro ou a rua do cliente em Indaiatuba/SP.
 
-## Conteúdo
+## Arquivos
 
-- `tabela-gas.html`: página de consulta, com busca por bairro ou por rua, preço, preço negociável e distância aproximada até a Loja 1.
-- `dados/tabela.json`: base de dados com bairros, faixa de preço, preço negociável, distância e ruas de cada bairro.
+| Arquivo | Para que serve |
+|---|---|
+| `versao-claude.html` | Código da página publicada no Claude (versão em uso pelo atendimento). Lê e salva os dados no banco do artifact. |
+| `dados/tabela.json` | Cópia dos dados: bairros, preço, preço negociável, distância até a Loja 1, loja que entrega e ruas de cada bairro. |
+| `index.html` | Versão para a Vercel, só leitura, com os dados embutidos. **Gerada automaticamente**, não editar à mão. |
+| `scripts/montar.py` | Gera o `index.html` a partir dos dois arquivos acima e valida os dados. |
+| `vercel.json` | URLs limpas e `noindex` (a página não aparece no Google). |
+| `CLAUDE.md` | Passo a passo para o Claude manter tudo sincronizado. |
+
+## Como atualizar
+
+1. Altere a tabela pela página no Claude (botão **Editar tabela**) ou peça ao Claude.
+2. Atualize `dados/tabela.json` com os dados novos.
+3. Rode `python3 scripts/montar.py` para regenerar o `index.html`.
+4. Faça commit. A Vercel publica sozinha.
 
 ## Lojas
 
@@ -24,4 +37,3 @@ R$ 130,00 · R$ 132,00 · R$ 135,00 · R$ 138,00 · R$ 140,00 · R$ 142,99 · R$
 - As distâncias são aproximadas e servem só de referência de localização. O preço vem sempre da tabela.
 - Bairros com `"ok": false` ainda não tiveram preço conferido.
 - As ruas vieram da base pública de CEPs do CEP Brasil (cepbrasil.org) e podem não incluir loteamentos muito recentes.
-- A versão em uso pelo atendimento é a página publicada no Claude. Este repositório guarda cópias de segurança da página e dos dados.
